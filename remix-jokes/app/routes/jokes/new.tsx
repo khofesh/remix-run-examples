@@ -1,7 +1,15 @@
 import type { ActionFunction, LoaderFunction } from "remix";
-import { redirect, useActionData, json, useCatch, Link } from "remix";
+import {
+  redirect,
+  useActionData,
+  json,
+  useCatch,
+  Link,
+  useTransition,
+} from "remix";
 import { db } from "~/utils/db.server";
 import { requireUserId, getUserId } from "~/utils/session.server";
+import { JokeDisplay } from "~/components/joke";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const userId = await getUserId(request);
@@ -66,6 +74,26 @@ export const action: ActionFunction = async ({ request }) => {
 
 export default function NewJokeRoute() {
   const actionData = useActionData<ActionData>();
+  const transition = useTransition();
+
+  if (transition.submission) {
+    const name = transition.submission.formData.get("name");
+    const content = transition.submission.formData.get("content");
+    if (
+      typeof name === "string" &&
+      typeof content === "string" &&
+      !validateJokeContent(content) &&
+      !validateJokeName(name)
+    ) {
+      return (
+        <JokeDisplay
+          joke={{ name, content }}
+          isOwner={true}
+          canDelete={false}
+        />
+      );
+    }
+  }
 
   return (
     <div>
